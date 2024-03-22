@@ -1,27 +1,15 @@
 const express = require('express');
 const db = require('../db.json');
+const auth = require('../middleware/auth');
 const router = express.Router();
-const jwt = require('jsonwebtoken');
-const jwtSecret = process.env.JWT_SECRET;
 
 // @route GET /api/user
 // @desc Get user data
 // @access Private
-router.get('/' , [], (req, res) => {
-  const token = req.header('x-auth-token');
-  if (!token) {
-    return res.status(401).json({
-      message: 'Token is not available.',
-      error: true,
-      statusCode: 401,
-      data: null
-    });
-  }
-
+router.get('/' , [auth], (req, res) => {
   try {
-    // Extract payload from token
-    const payload = jwt.verify(token, jwtSecret);
-    const userId = payload.user.id;
+    // Get input
+    const userId = req.user.id;
   
     // Get User data
     const user = db.user.find(user => user.id === userId);
@@ -39,10 +27,10 @@ router.get('/' , [], (req, res) => {
       }
     });
   } catch (error) {
-    return res.status(401).json({
-      message: 'Token is expired, login again.',
+    return res.status(500).json({
+      message: 'Server Error.',
       error: true,
-      statusCode: 401,
+      statusCode: 500,
       data: null
     });
   }
@@ -51,21 +39,10 @@ router.get('/' , [], (req, res) => {
 // @route DELETE /api/user
 // @desc Delete a user
 // @access Private
-router.delete('/' , (req,res) => {
-  const token = req.header('x-auth-token');
-  if (!token) {
-    return res.status(401).json({
-      message: 'Token is not available.',
-      error: true,
-      statusCode: 401,
-      data: null
-    });
-  }
-
+router.delete('/' , [auth], (req,res) => {
   try {
-    // Extract payload from token
-    const payload = jwt.verify(token, jwtSecret);
-    const userId = payload.user.id;
+    // Get input
+    const userId = req.user.id;
   
     // Get Index of user i want to delete
     const userIndex = db.user.findIndex(user => user.id === userId);
@@ -93,10 +70,10 @@ router.delete('/' , (req,res) => {
       }
     });
   } catch (error) {
-    return res.status(401).json({
-      message: 'Token is expired, login again.',
+    return res.status(500).json({
+      message: 'Server Error.',
       error: true,
-      statusCode: 401,
+      statusCode: 500,
       data: null
     });
   }

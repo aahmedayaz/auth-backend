@@ -7,8 +7,6 @@ const auth = require('./routes/auth')
 const user = require('./routes/user')
 const path = require('path')
 
-
-
 // Express App
 const app = express()
 const port = process.env.PORT || 4000
@@ -21,16 +19,16 @@ app.use(express.static(path.join(__dirname, 'client', 'build')));
 app.use('/api/auth' , auth)
 app.use('/api/user' , user)
 
-
 // Path for React App
 const reactBuildDir = path.join(__dirname, 'client' , 'build' , 'index.html')
 app.get('/' , (req, res) => {
   res.sendFile(reactBuildDir)
-})
+});
+
+// Path for Backend App
 app.get('/api' , (req, res) => {
   res.send("Welcome to the Backend")
 })
-
 
 // Listen
 app.listen(port, () => {
