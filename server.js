@@ -4,6 +4,7 @@ const express = require('express')
 
 // Export 
 const auth = require('./routes/auth')
+const user = require('./routes/user')
 const path = require('path')
 
 
@@ -18,6 +19,7 @@ app.use(express.static(path.join(__dirname, 'client', 'build')));
 
 // Routes
 app.use('/api/auth' , auth)
+app.use('/api' , user)
 
 
 // Path for React App
