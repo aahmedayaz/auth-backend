@@ -3,8 +3,9 @@ const bcrypt = require('bcrypt');
 const uuidv4 = require('uuid').v4;
 const db = require('../db.json');
 const { body, validationResult } = require('express-validator');
-
-const router = express.Router()
+const router = express.Router();
+const jwt = require('jsonwebtoken');
+const jwtSecret = process.env.JWT_SECRET;
 
 router.post('/signup', [
   body('email').isEmail().withMessage('Invalid email address.'),
@@ -45,22 +46,42 @@ router.post('/signup', [
   const salt = await bcrypt.genSalt(10);
   newUser.password = await bcrypt.hash(password, salt); // encrypt password
 
-  // Add user in database
-  db.user.push(newUser);
+  try {
+    // Add user in database
+    db.user.push(newUser);
 
-  // Remove password to user object to client
-  const { password: encryptedPassword, ...userWithoutPassword } = newUser;
+    // Remove password to user object to client
+    const { password: encryptedPassword, ...userWithoutPassword } = newUser;
 
-  // If admin found, return success message
-  return res.json({
-    message: 'Your account has been created successfully.',
-    error: false,
-    statusCode: 200,
-    data: {
-      token: 'abcd',
-      user: userWithoutPassword,
+    // Generate token
+    const payload = {
+      user: newUser,
     }
-  });
+    
+    jwt.sign(payload, jwtSecret, {
+      expiresIn: "2m",
+    }, (error, token) => {
+      if(error) throw error;
+      // If token generated, return success message
+      return res.json({
+        message: 'Your account has been created successfully.',
+        error: false,
+        statusCode: 200,
+        data: {
+          token,
+          user: userWithoutPassword,
+        }
+      });
+    });
+
+  } catch (error) {
+    return res.status(500).json({
+      message: 'Server error.',
+      error: true,
+      statusCode: 500,
+      data: null
+    });
+  }
 })
 
 router.post('/login' , [
@@ -103,19 +124,41 @@ router.post('/login' , [
     });
   }
 
-  // Remove password to user object to client
-  const { password: encryptedPassword, ...userWithoutPassword } = user;
 
-  // email and password are correct, return success message
-  return res.json({
-    message: 'Your are logged in successfully.',
-    error: false,
-    statusCode: 200,
-    data: {
-      token: 'abcd',
-      user: userWithoutPassword,
+  try {
+    // Remove password to user object to client
+    const { password: encryptedPassword, ...userWithoutPassword } = user;
+
+    // Generate token
+    const payload = {
+      user: user,
     }
-  });
+    
+    jwt.sign(payload, jwtSecret, {
+      expiresIn: "2m",
+    }, (error, token) => {
+      if(error) throw error;
+      // If token generated, return success message
+      // email and password are correct, return success message
+      return res.json({
+        message: 'Your are logged in successfully.',
+        error: false,
+        statusCode: 200,
+        data: {
+          token,
+          user: userWithoutPassword,
+        }
+      });
+    });
+  } catch (error) {
+      return res.status(500).json({
+        message: 'Server error.',
+        error: true,
+        statusCode: 500,
+        data: null
+      });
+  }
+
 })
 
 module.exports = router
