@@ -19,7 +19,7 @@ app.use(express.static(path.join(__dirname, 'client', 'build')));
 
 // Routes
 app.use('/api/auth' , auth)
-app.use('/api' , user)
+app.use('/api/user' , user)
 
 
 // Path for React App

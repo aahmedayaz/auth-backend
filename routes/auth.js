@@ -2,11 +2,15 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const uuidv4 = require('uuid').v4;
 const db = require('../db.json');
+const constants = require('../constants/index.json');
 const { body, validationResult } = require('express-validator');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const jwtSecret = process.env.JWT_SECRET;
 
+// @route POST /api/auth/signup
+// @desc Create Account
+// @access Public
 router.post('/signup', [
   body('email').isEmail().withMessage('Invalid email address.'),
   body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters long.')
@@ -28,10 +32,10 @@ router.post('/signup', [
   // If admin not found, return error message
   const userAlreadyExist = db.user.some(user => user.email === email);
   if (userAlreadyExist) {
-    return res.status(401).json({
+    return res.status(400).json({
       message: 'Account with this email already exist.',
       error: true,
-      statusCode: 401,
+      statusCode: 400,
       data: null
     });
   };
@@ -59,11 +63,11 @@ router.post('/signup', [
     }
     
     jwt.sign(payload, jwtSecret, {
-      expiresIn: "2m",
+      expiresIn: constants.jwt_expire_duration,
     }, (error, token) => {
       if(error) throw error;
       // If token generated, return success message
-      return res.json({
+      return res.status(200).json({
         message: 'Your account has been created successfully.',
         error: false,
         statusCode: 200,
@@ -84,6 +88,9 @@ router.post('/signup', [
   }
 })
 
+// @route POST /api/auth/login
+// @desc Login user
+// @access Public
 router.post('/login' , [
   body('email').isEmail().withMessage('Invalid email address.'),
   body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters long.')
@@ -135,12 +142,11 @@ router.post('/login' , [
     }
     
     jwt.sign(payload, jwtSecret, {
-      expiresIn: "2m",
+      expiresIn: constants.jwt_expire_duration,
     }, (error, token) => {
       if(error) throw error;
       // If token generated, return success message
-      // email and password are correct, return success message
-      return res.json({
+      return res.status(200).json({
         message: 'Your are logged in successfully.',
         error: false,
         statusCode: 200,
